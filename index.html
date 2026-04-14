@@ -134,33 +134,107 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-tertiary);
-      margin-bottom: 20px;
+      margin-bottom: 28px;
     }
 
-    .contact-links {
+    .contact-form {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 20px;
+      max-width: 480px;
     }
 
-    .contact-links a {
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-field label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text-tertiary);
+    }
+
+    .form-field input,
+    .form-field textarea {
+      font-family: var(--font);
       font-size: 0.9375rem;
       color: var(--text-primary);
-      text-decoration: none;
-      width: fit-content;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.15s ease, color 0.15s ease;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #d8d8d8;
+      padding: 8px 0;
+      outline: none;
+      transition: border-color 0.15s ease;
+      width: 100%;
+      resize: none;
     }
 
-    .contact-links a:hover {
-      color: var(--text-primary);
+    .form-field input::placeholder,
+    .form-field textarea::placeholder {
+      color: #c0c0c0;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus {
       border-bottom-color: var(--text-primary);
     }
 
-    .contact-links a:focus-visible {
-      outline: 2px solid var(--text-primary);
-      outline-offset: 3px;
-      border-radius: 2px;
+    .form-field textarea {
+      min-height: 96px;
+    }
+
+    .form-submit {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding-top: 4px;
+    }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--bg);
+      background: var(--text-primary);
+      border: none;
+      border-radius: 6px;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      opacity: 0.75;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .form-status {
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+      display: none;
+    }
+
+    .form-status.visible {
+      display: block;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ── Footer ── */
@@ -236,9 +310,27 @@
 
     <section class="contact" aria-label="Contact">
       <p class="contact-label">Get in touch</p>
-      <nav class="contact-links">
-        <a href="mailto:marc@herzog-digital.com">marc@herzog-digital.com</a>
-      </nav>
+      <form class="contact-form" id="contact-form">
+        <input type="hidden" name="access_key" value="213dee99-61d4-45af-b587-a6e97df59608">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required>
+          </div>
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="your@email.com" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="What's on your mind?" required></textarea>
+        </div>
+        <div class="form-submit">
+          <button type="submit" class="btn" id="submit-btn">Send message</button>
+          <span class="form-status" id="form-status" role="status"></span>
+        </div>
+      </form>
     </section>
 
   </main>
@@ -246,6 +338,48 @@
   <footer>
     <p class="footer-text">&copy; 2026 Herzog Digital LLC</p>
   </footer>
+
+  <script>
+    const form = document.getElementById('contact-form');
+    const btn = document.getElementById('submit-btn');
+    const status = document.getElementById('form-status');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      status.className = 'form-status';
+
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            access_key: '213dee99-61d4-45af-b587-a6e97df59608',
+            name: form.name.value,
+            email: form.email.value,
+            message: form.message.value
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          form.reset();
+          btn.textContent = 'Sent';
+          status.textContent = "Thanks — I'll be in touch shortly.";
+          status.className = 'form-status visible';
+        } else {
+          throw new Error();
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Send message';
+        status.textContent = 'Something went wrong. Try again.';
+        status.className = 'form-status visible';
+      }
+    });
+  </script>
 
 </body>
 </html>
